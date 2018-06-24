@@ -5,8 +5,8 @@ from pisqpipe import DEBUG_EVAL, DEBUG
 
 pp.infotext = 'name="pbrain-pyrandom", author="Jan Stransky", version="1.0", country="Czech Republic", www="https://github.com/stranskyjan/pbrain-pyrandom"'
 
-MAX_BOARD = 100
-gomoku = util.Gomoku(pp.width, pp.height)
+MAX_BOARD = 20
+gomoku = util.Gomoku(MAX_BOARD, MAX_BOARD)
 
 def brain_init():
     if pp.width < 5 or pp.height < 5:
@@ -15,7 +15,6 @@ def brain_init():
     if pp.width > MAX_BOARD or pp.height > MAX_BOARD:
         pp.pipeOut("ERROR Maximal board size is {}".format(MAX_BOARD))
         return
-    gomoku = util.Gomoku(pp.width, pp.height)
     pp.pipeOut("OK")
 
 

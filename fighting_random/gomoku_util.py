@@ -6,7 +6,7 @@ class Gomoku(object):
     
     def __init__(self, width, height, board = None, player = None):
         if board == None:
-            board = [[0] * height] * width
+            board = [[0 for i in range(height)] for j in range(width)]
         else:
             assert len(board) == width and len(board[0]) == height, 'The board does not agree with the num of rows'
         if player == None:
@@ -17,7 +17,7 @@ class Gomoku(object):
         self.state = [board, player]
 
     def restart(self):
-        board = [[0] * self.height] * self.width
+        board = [[0 for i in range(self.height)] for j in range(self.width)]
         player = 1
         self.state = [board, player]
     
