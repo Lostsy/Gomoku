@@ -31,6 +31,12 @@ class Gomoku(object):
         # allow pieces other than [1,2] on the board, e.g. 3 for block
         return x >= 0 and y >= 0 and x < self.width and y < self.height and self.state[0][x][y] == 0
 
+    def is_occupied(self, x, y):
+        # check if a position on the board is occupied given two coords
+        # return True for yes, False for no
+        # allow pieces other than [1,2] on the board, e.g. 3 for block
+        return x >= 0 and y >= 0 and x < self.width and y < self.height and self.state[0][x][y] != 0
+
     def is_end(self, parameter_list):
         # check if the game has a winner given a board and a new move
         # return the winner (in [1,2]) or None for no winner
@@ -55,7 +61,10 @@ class Gomoku(object):
         
     def take_back(self, x, y):
         # take a move from the board given two coords
-        if x >= 0 and y >= 0 and x < self.width and y < self.height and self.state[0][x][y] != 0:
-            self.state[0][x][y] = 0
-            return 0
-        return 2
+        self.state[0][x][y] = 0
+
+    def get_board(self):
+        return self.state[0]
+    
+    def get_player(self):
+        return self.state[1]
