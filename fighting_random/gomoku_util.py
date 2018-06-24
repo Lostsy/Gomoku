@@ -20,10 +20,6 @@ class Gomoku(object):
         board = [[0] * self.height] * self.width
         player = 1
         self.state = [board, player]
-
-    def get_actions(self, parameter_list):
-        # return legal actions given a state
-        raise NotImplementedError
     
     def is_free(self, x, y):
         # check if a position on the board is legal given two coords
@@ -68,3 +64,4 @@ class Gomoku(object):
     
     def get_player(self):
         return self.state[1]
+
