@@ -144,7 +144,6 @@ class Gomoku(object):
 			return [player]
 
 
-
 	def change_player(self):
 		# change the player of the game
 		if self.state[1] == 1:
@@ -157,10 +156,6 @@ class Gomoku(object):
 		# allow players other than [1,2] on the board, e.g. 3 for block
 		if self.is_free(x, y):
 			self.state[0][x][y] = player
-
-
-
-
 			self.change_player()
 		else:
 			pp.pipeOut("ERROR player {} move [{},{}]".format(player, x, y))
@@ -174,6 +169,52 @@ class Gomoku(object):
 
 	def get_player(self):
 		return self.state[1]
+
+
+
+def GA(gomoku):
+	CHECK_SCOPE = 2#the range para
+
+	def round_check(board,x, y, scope):
+		# given a position (x,y) and scope(integer), check the positions around and return a position list that can make a move.
+		position = []
+		for i in range(max(0,x-scope),min(x+scope+1,MAX_BOARD)):
+			for j in range(max(0,y-scope),min(y+scope+1,MAX_BOARD)):
+				if board[i][j] ==0:
+					position.append((i,j))
+		return
+
+
+	def position2check(board):
+		p2c = []
+		board = gomoku.state[0]
+		for i in range(MAX_BOARD):
+			for j in range(MAX_BOARD):
+				if board[i][j] != 0:
+					rounds = round_check(board,i,j,CHECK_SCOPE)
+					for item in rounds:
+						if item not in p2c:
+							p2c.append(item)
+		return p2c
+
+	def fitness_function(para):
+		#the function to compute a position's fitness value
+		pass
+
+	def cross_fertilize(para):
+		#the cross_fertilize function to create new gomoku chains
+		pass
+
+	def mutation(para):
+		#the mutation to create mutation of gomoku chains with a motation rate
+		pass
+
+	def selectionofgod_the_programmer(para):
+		#given chains and theri fitness values, make a simulation of natural selection, return a list of new selected gomoku chains
+		pass
+
+
+
 ######################################################################
 # A possible way how to debug brains.
 # To test it, just "uncomment" it (delete enclosing """)
