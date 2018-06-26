@@ -1,7 +1,3 @@
-import random
-import pisqpipe as pp
-from pisqpipe import DEBUG_EVAL, DEBUG
-
 class Gomoku(object):
     
     def __init__(self, width, height, board = None, player = None):
@@ -49,11 +45,8 @@ class Gomoku(object):
     def make_move(self, x, y, player):
         # put a move to the board given two coords and a player
         # allow players other than [1,2] on the board, e.g. 3 for block
-        if self.is_free(x,y):
-            self.state[0][x][y] = player
-            self.change_player()
-        else:
-            pp.pipeOut("ERROR player {} move [{},{}]".format(player, x, y))
+        self.state[0][x][y] = player
+        self.change_player()
         
     def take_back(self, x, y):
         # take a move from the board given two coords
