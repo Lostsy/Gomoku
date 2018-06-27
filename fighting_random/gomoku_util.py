@@ -6,10 +6,6 @@ class Gomoku(object):
         else:
             assert len(board) == width and len(
                 board[0]) == height, 'The board does not agree with the num of rows'
-        if player == None:
-            player = 1
-        else:
-            assert player in [1, 2], 'player can only be 1 or 2'
         self.height, self.width = height, width
         self.state = [board, player]
 
@@ -61,16 +57,16 @@ class Gomoku(object):
 
     def change_player(self):
         # change the player of the game
-        if self.state[1] == 1:
-            self.state[1] = 2
-        elif self.state[1] == 2:
-            self.state[1] = 1
+        self.state[1] = player
 
     def make_move(self, x, y, player):
         # put a move to the board given two coords and a player
         # allow players other than [1,2] on the board, e.g. 3 for block
         self.state[0][x][y] = player
-        self.change_player()
+        if player == 1:
+            self.change_player(2)
+        elif player == 2:
+            self.change_player(1)
 
     def take_back(self, x, y):
         # take a move from the board given two coords
