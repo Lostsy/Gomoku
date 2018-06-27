@@ -1,6 +1,6 @@
 import random
 import gomoku_util as util
-import MCTS.util as mcts
+import MCTS_util as mcts
 import pisqpipe as pp
 from pisqpipe import DEBUG_EVAL, DEBUG
 
