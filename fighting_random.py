@@ -2,6 +2,7 @@ import random
 import gomoku_util as util
 import pisqpipe as pp
 from pisqpipe import DEBUG_EVAL, DEBUG
+import random
 
 pp.infotext = 'name="fighting_random", author="Ding", version="0.0", country="China", www="https://github.com/stranskyjan/pbrain-pyrandom"'
 MAX_BOARD = 20
@@ -117,41 +118,6 @@ def GA(gomoku):
                             p2c.append(item)
         return p2c
 
-    def create_lines(gomoku, x, y):
-        # check x l
-        x_l = ""
-        for i in range(x - 1,max(0,x-5)-1,-1):
-            x_l += str(gomoku[i][y])
-        # check x r
-        x_r = ""
-        for i in range(x + 1, min(MAX_BOARD, x + 6)):
-            x_r += str(gomoku[i][y])
-        # check y up
-        y_up = ""
-        for i in range(y + 1, min(MAX_BOARD, y + 6)):
-            y_up += str(gomoku[x][i])
-        # check y down
-        y_down = ""
-        for i in range(y - 1, max(0, y - 5)-1, -1):
-            y_down += str(gomoku[x][i])
-        # check \up
-        l2bup = ""
-        for i in range(x - 1, max(0, x - 5)-1, -1):
-            l2bup += str(gomoku[i][y + (x - i)])
-        # check \down
-        l2bdown = ""
-        for i in range(x + 1, min(MAX_BOARD, x + 6)):
-            l2bdown += str(gomoku[i][y + (x - i)])
-        # check /up
-        r2tup = ""
-        for i in range(y + 1, min(MAX_BOARD, y + 6)):
-            r2tup += str(gomoku[x - y + i][i])
-        # check /down
-        r2tdown = ""
-        for i in range(y - 1, max(0, y - 5) - 1):
-            r2tdown += str(gomoku[x - y + i][i])
-        return [[x_l, x_r], [y_up, y_down], [l2bup, l2bdown], [r2tup, r2tdown]]
-
     def createline(board, x, y):
         x_axis = "".join([str(board[x][i]) for i in range(MAX_BOARD)])
         y_axis = "".join([str(board[i][y]) for i in range(MAX_BOARD)])
@@ -162,7 +128,7 @@ def GA(gomoku):
     def pattern_matching(board, x, y, player):
         #12 patterns to recognize
         board[x][y] = player
-        lines = createline()
+        lines = createline(board, x, y)
         for item in lines:#Reward 1023
             #活5
             if item.find(str(player)*5) != -1:
@@ -227,25 +193,75 @@ def GA(gomoku):
         return PATTERN_REWARD[10]
 
 
-
-
-
-
-    def fitness_function(para):
+    def fitness_function(gomoku, chain):
         # the function to compute a position's fitness value
-        pass
+        fvalue = 0
+        for position in chain:
+            lastplayer = gomoku.state[1]
+            gomoku.make_move(position[0], position[1], lastplayer)
+            if lastplayer == 1:
+                fvalue += pattern_matching(gomoku.state[0], position[0], position[1], lastplayer)
+            if lastplayer == 2:
+                fvalue -= pattern_matching(gomoku.state[0], position[0], position[1], lastplayer)
+        return fvalue
 
-    def cross_fertilize(para):
+
+    def cross_fertilize(chain1, chain2):
         # the cross_fertilize function to create new gomoku chains
-        pass
+        length1 = len(chain1)
+        length2 = len(chain2)
+        if length1!=length2:
+            raise Exception("Cross fertilizing two chains with different length!")
+        change_point = random.randint(0,length1-1)
+        childchain1 = [chain1[i] for i in range(change_point)] + [chain2[i] for i in range(change_point,length1)]
+        childchain2 = [chain2[i] for i in range(change_point)] + [chain1[i] for i in range(change_point, length1)]
+        return [childchain1, childchain2]
 
-    def mutation(para):
+
+    def mutation(chain, gomoku):
         # the mutation to create mutation of gomoku chains with a motation rate
-        pass
+        mutationposition = random.randint(0,len(chain)-1)
+        for position in chain:
+            gomoku.make_move(position[0],position[1],gomoku.state[1])
+        board = gomoku.state[0]
+        board[chain[mutationposition][0]][chain[mutationposition][1]] = 0
+        positionset = position2check(board)
+        newposition = positionset[random.randint(0,len(positionset)-1)]
+        newchain =[chain[i] for i in range(mutationposition)]+[newposition]+[chain[i] for i in range(mutationposition+1,len(chain))]
+        return newchain
 
-    def selectionofgod_the_programmer(para):
+
+    def selectionofgod_the_programmer(chain_set, n, replacement = 1):#[[chain,fvalue],...]
         # given chains and theri fitness values, make a simulation of natural selection, return a list of new selected gomoku chains
-        pass
+        if replacement == 1:
+            selected_chains = []
+            for i in range(n):
+                recentvalue = 0
+                chainsetvalue = sum([item[1] for item in chain_set])
+                randomvalue = random.randint(0,chainsetvalue-1)
+                for item in chain_set:
+                    recentvalue += item[1]
+                    if randomvalue < recentvalue:
+                        selected_chains.append(item[0])
+                        chain_set.remove(item)
+            return selected_chains
+        elif replacement == 0:
+            selected_chains = []
+            for i in range(n):
+                recentvalue = 0
+                chainsetvalue = sum([item[1] for item in chain_set])
+                randomvalue = random.randint(0, chainsetvalue - 1)
+                for item in chain_set:
+                    recentvalue += item[1]
+                    if randomvalue < recentvalue:
+                        selected_chains.append(item[0])
+            return selected_chains
+        else:
+            raise Exception("replacement should be 0 or 1")
+
+
+
+
 
 
 ######################################################################
