@@ -53,6 +53,10 @@ def brain_takeback(x, y):
 
 
 def brain_turn():
+    root_mcts_node = mcts.Gomoku_MCTS(gomoku,None)
+    gomoku_mcts = mcts.MonteCarloTreeSearch(root_mcts_node)
+    best_move = gomoku_mcts.best_action()
+    pp.do_mymove(*best_move)
     pass
 
 
