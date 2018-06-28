@@ -3,6 +3,7 @@ import gomoku_util as util
 import pisqpipe as pp
 from pisqpipe import DEBUG_EVAL, DEBUG
 import random
+import copy
 
 pp.infotext = 'name="fighting_random", author="Ding", version="0.0", country="China", www="https://github.com/stranskyjan/pbrain-pyrandom"'
 MAX_BOARD = 20
@@ -58,8 +59,11 @@ def brain_turn():
         return
     i = 0
     while True:
-        x = random.randint(0, pp.width - 1)
-        y = random.randint(0, pp.height - 1)
+        # x = random.randint(0, pp.width - 1)
+        # y = random.randint(0, pp.height - 1)
+        position = GA(gomoku)
+        x = position[0]
+        y = position[1]
         i += 1
         if pp.terminateAI:
             return
@@ -96,6 +100,10 @@ if DEBUG_EVAL:
 def GA(gomoku):
     CHECK_SCOPE = 2  # the range para
     PATTERN_REWARD = [1023, 511, 255, 127, 63, 31, 15, 7, 3, 1, 0]
+    SEARCHDEPTH = 7
+    INITIALCHAINNUM = 20
+    PARENTNUM = 10
+    MUTATIONRATE = 0.005
 
     def round_check(board, x, y, scope):
         # given a position (x,y) and scope(integer), check the positions around and return a position list that can make a move.
@@ -192,7 +200,6 @@ def GA(gomoku):
                 return PATTERN_REWARD[9]
         return PATTERN_REWARD[10]
 
-
     def fitness_function(gomoku, chain):
         # the function to compute a position's fitness value
         fvalue = 0
@@ -205,7 +212,6 @@ def GA(gomoku):
                 fvalue -= pattern_matching(gomoku.state[0], position[0], position[1], lastplayer)
         return fvalue
 
-
     def cross_fertilize(chain1, chain2):
         # the cross_fertilize function to create new gomoku chains
         length1 = len(chain1)
@@ -216,7 +222,6 @@ def GA(gomoku):
         childchain1 = [chain1[i] for i in range(change_point)] + [chain2[i] for i in range(change_point,length1)]
         childchain2 = [chain2[i] for i in range(change_point)] + [chain1[i] for i in range(change_point, length1)]
         return [childchain1, childchain2]
-
 
     def mutation(chain, gomoku):
         # the mutation to create mutation of gomoku chains with a motation rate
@@ -229,7 +234,6 @@ def GA(gomoku):
         newposition = positionset[random.randint(0,len(positionset)-1)]
         newchain =[chain[i] for i in range(mutationposition)]+[newposition]+[chain[i] for i in range(mutationposition+1,len(chain))]
         return newchain
-
 
     def selectionofgod_the_programmer(chain_set, n, replacement = 1):#[[chain,fvalue],...]
         # given chains and theri fitness values, make a simulation of natural selection, return a list of new selected gomoku chains
@@ -258,6 +262,54 @@ def GA(gomoku):
             return selected_chains
         else:
             raise Exception("replacement should be 0 or 1")
+
+    def initialize_chains(gomoku, n, chainlength = SEARCHDEPTH):
+        #create some chains randomly
+        chainset = []
+        for i in range(n):
+            chain = []
+            lastgomoku = gomoku
+            while chainlen < chainlength:
+                checking_position = position2check(lastgomoku.state[0])
+                position = random.sample(checking_position, 1)
+                chain.append((position))
+                lastgomoku.make_move(position[0], position[1], lastgomoku.state[1])
+            chainset.append(chain)
+        return chainset
+
+    #initialize
+    if gomoku.state[1]==1 and gomoku.state == [[0 for i in range(MAX_BOARD)] for j in range(MAX_BOARD)]:
+        gomoku.make_move(MAX_BOARD//2,MAX_BOARD//2,gomoku.state[1])
+    chains = initialize_chains(gomoku, n = INITIALCHAINNUM)
+    child_chain_set = []
+    #Rounds
+    while(list(child_chain_set.difference(chains))!=[]):
+        chains = copy.deepcopy(child_chain_set)
+        # Compute fitness values
+        chain_set = []
+        for item in chains:
+            chain_set.append([item, fitness_function(gomoku, item)])
+        # Select parents and cross fertilize
+        child_chain_set = []
+        for i in range(PARENTNUM):
+            [parent1, parent2] = selectionofgod_the_programmer(chain_set, 2, replacement=0)
+            [child1, child2] = cross_fertilize(parent1, parent2)
+            child_chain_set.append(child1)
+            child_chain_set.append(child2)
+        # Mutation
+        for i, item in enumerate(child_chain_set):
+            if random.random() <= MUTATIONRATE:
+                child_chain_set[i] = mutation(chain, gomoku)
+        # Next Generation
+    [finial_chain] = selectionofgod_the_programmer(chain_set, 1)
+    finial_position = finial_chain[0]
+    return finial_position
+
+
+
+
+
+
 
 
 
