@@ -2,7 +2,6 @@ import random
 import gomoku_util as util
 import pisqpipe as pp
 from pisqpipe import DEBUG_EVAL, DEBUG
-import random
 import copy
 
 pp.infotext = 'name="fighting_random", author="Ding", version="0.0", country="China", www="https://github.com/stranskyjan/pbrain-pyrandom"'
@@ -55,22 +54,28 @@ def brain_takeback(x, y):
 
 
 def brain_turn():
+    logDebug("==================================================")
+    logDebug("Starting1")
     if pp.terminateAI:
         return
-    i = 0
+    sss = 0
     while True:
         # x = random.randint(0, pp.width - 1)
         # y = random.randint(0, pp.height - 1)
+        logDebug("==================================================")
+        logDebug("Starting")
         position = GA(gomoku)
         x = position[0]
         y = position[1]
-        i += 1
+        logDebug("==================================================")
+        logDebug("XY get!")
+        sss += 1
         if pp.terminateAI:
             return
         if gomoku.is_free(x, y):
             break
-    if i > 1:
-        pp.pipeOut("DEBUG {} coordinates didn't hit an empty field".format(i))
+    if sss > 1:
+        pp.pipeOut("DEBUG {} coordinates didn't hit an empty field".format(sss))
     pp.do_mymove(x, y)
 
 
@@ -97,7 +102,7 @@ if DEBUG_EVAL:
         win32gui.ReleaseDC(wnd, dc)
 
 
-def GA(gomoku):
+def GA(gomoku, MAXROUNDS = 500):
     CHECK_SCOPE = 2  # the range para
     PATTERN_REWARD = [1023, 511, 255, 127, 63, 31, 15, 7, 3, 1, 0]
     SEARCHDEPTH = 7
@@ -112,7 +117,7 @@ def GA(gomoku):
             for j in range(max(0, y - scope), min(y + scope + 1, MAX_BOARD)):
                 if board[i][j] == 0:
                     position.append((i, j))
-        return
+        return position
 
     def position2check(board):
         p2c = []
@@ -121,9 +126,10 @@ def GA(gomoku):
             for j in range(MAX_BOARD):
                 if board[i][j] != 0:
                     rounds = round_check(board, i, j, CHECK_SCOPE)
-                    for item in rounds:
-                        if item not in p2c:
-                            p2c.append(item)
+                    if rounds != []:
+                        for item in rounds:
+                            if item not in p2c:
+                                p2c.append(item)
         return p2c
 
     def createline(board, x, y):
@@ -147,30 +153,30 @@ def GA(gomoku):
                 return PATTERN_REWARD[1]
             #死4+活3
             if (item.find("0"+str(player)*4+"1") != -1 or item.find("1"+str(player)*4+"0") != -1):
-                rest = lines.remove(item)
-                for item2 in rest:
-                    if item2.find("0"+str(player)*3+"0") != -1:
-                        return PATTERN_REWARD[1]
+                for item2 in lines:
+                    if item2 != item:
+                        if item2.find("0"+str(player)*3+"0") != -1:
+                            return PATTERN_REWARD[1]
             #死4+死4
             if (item.find("0"+str(player)*4+"1") != -1 or item.find("1"+str(player)*4+"0") != -1):
-                rest = lines.remove(item)
-                for item2 in rest:
-                    if (item2.find("0" + str(player) * 4 + "1") != -1 or item2.find("1" + str(player) * 4 + "0") != -1):
-                        return PATTERN_REWARD[1]
+                for item2 in lines:
+                    if item2 != item:
+                        if (item2.find("0" + str(player) * 4 + "1") != -1 or item2.find("1" + str(player) * 4 + "0") != -1):
+                            return PATTERN_REWARD[1]
         for item in lines:#Reward 255
             # 活3+活3
             if item.find("0" + str(player) * 3 + "0") != -1:
-                rest = lines.remove(item)
-                for item2 in rest:
-                    if item2.find("0" + str(player) * 3 + "0") != -1:
-                        return PATTERN_REWARD[2]
+                for item2 in lines:
+                    if item2 != item:
+                        if item2.find("0" + str(player) * 3 + "0") != -1:
+                            return PATTERN_REWARD[2]
         for item in lines:#Reward 127
             #死3+活3
             if item.find("0" + str(player) * 3 + "0") != -1:
-                rest = lines.remove(item)
-                for item2 in rest:
-                    if (item2.find("0" + str(player) * 3 + "1") != -1 or item2.find("1" + str(player) * 3 + "0") != -1):
-                        return PATTERN_REWARD[3]
+                for item2 in lines:
+                    if item2 != item:
+                        if (item2.find("0" + str(player) * 3 + "1") != -1 or item2.find("1" + str(player) * 3 + "0") != -1):
+                            return PATTERN_REWARD[3]
         for item in lines:#Reward 63
             #活3
             if item.find("0" + str(player) * 3 + "0") != -1:
@@ -182,10 +188,10 @@ def GA(gomoku):
         for item in lines:#Reward 15
             #活2+活2
             if item.find("0" + str(player) * 2 + "0") != -1:
-                rest = lines.remove(item)
-                for item2 in rest:
-                    if item2.find("0" + str(player) * 2 + "0") != -1:
-                        return PATTERN_REWARD[6]
+                for item2 in lines:
+                    if item2 != item:
+                        if item2.find("0" + str(player) * 2 + "0") != -1:
+                            return PATTERN_REWARD[6]
         for item in lines:#Reward 7
             #死3
             if (item.find("0" + str(player) * 3 + "1") != -1 or item.find("1" + str(player) * 3 + "0") != -1):
@@ -202,14 +208,15 @@ def GA(gomoku):
 
     def fitness_function(gomoku, chain):
         # the function to compute a position's fitness value
+        gomoku2 = copy.deepcopy(gomoku)
         fvalue = 0
         for position in chain:
             lastplayer = gomoku.state[1]
-            gomoku.make_move(position[0], position[1], lastplayer)
+            gomoku2.make_move(position[0], position[1], lastplayer)
             if lastplayer == 1:
-                fvalue += pattern_matching(gomoku.state[0], position[0], position[1], lastplayer)
+                fvalue += pattern_matching(gomoku2.state[0], position[0], position[1], lastplayer)
             if lastplayer == 2:
-                fvalue -= pattern_matching(gomoku.state[0], position[0], position[1], lastplayer)
+                fvalue -= pattern_matching(gomoku2.state[0], position[0], position[1], lastplayer)
         return fvalue
 
     def cross_fertilize(chain1, chain2):
@@ -225,90 +232,126 @@ def GA(gomoku):
 
     def mutation(chain, gomoku):
         # the mutation to create mutation of gomoku chains with a motation rate
+        gomoku2 = copy.deepcopy(gomoku)
         mutationposition = random.randint(0,len(chain)-1)
         for position in chain:
-            gomoku.make_move(position[0],position[1],gomoku.state[1])
-        board = gomoku.state[0]
+            gomoku2.make_move(position[0],position[1],gomoku.state[1])
+        board = gomoku2.state[0]
         board[chain[mutationposition][0]][chain[mutationposition][1]] = 0
         positionset = position2check(board)
         newposition = positionset[random.randint(0,len(positionset)-1)]
         newchain =[chain[i] for i in range(mutationposition)]+[newposition]+[chain[i] for i in range(mutationposition+1,len(chain))]
         return newchain
 
-    def selectionofgod_the_programmer(chain_set, n, replacement = 1):#[[chain,fvalue],...]
+    def selectionofgod_the_programmer(chain_set, n):# , replacement = 1):#[[chain,fvalue],...]
+        # TODO normalize the negative values
         # given chains and theri fitness values, make a simulation of natural selection, return a list of new selected gomoku chains
-        if replacement == 1:
-            selected_chains = []
-            for i in range(n):
-                recentvalue = 0
-                chainsetvalue = sum([item[1] for item in chain_set])
-                randomvalue = random.randint(0,chainsetvalue-1)
-                for item in chain_set:
-                    recentvalue += item[1]
-                    if randomvalue < recentvalue:
-                        selected_chains.append(item[0])
-                        chain_set.remove(item)
+        if chain_set == []:
+            logDebug("==================================================")
+            logDebug("Given empty chain_set")
+            raise Exception("Empty chain_set")
+        # check if all fvalue == 0
+        all_is_zero = 1
+        values = [item[1] for item in chain_set]
+        for value in values:
+            if value != 0:
+                all_is_zero = 1
+                break
+        if all_is_zero == 1:
+            selected_chains = [chain_value[0] for chain_value in random.sample(chain_set,n)]
             return selected_chains
-        elif replacement == 0:
-            selected_chains = []
-            for i in range(n):
-                recentvalue = 0
-                chainsetvalue = sum([item[1] for item in chain_set])
-                randomvalue = random.randint(0, chainsetvalue - 1)
-                for item in chain_set:
-                    recentvalue += item[1]
-                    if randomvalue < recentvalue:
-                        selected_chains.append(item[0])
-            return selected_chains
-        else:
-            raise Exception("replacement should be 0 or 1")
+        # normalization:
+        min_value = min([values])
+        for i in range(len(values)):
+            values[i] = values[i] + min_value
+        sum_modified_value = sum([values])
+        for i in range(n):
+            randomvalue = random.randint(0, sum_modified_value - 1)
+            for item in chain_set:
+                recentvalue += item[1]
+                if randomvalue < recentvalue:
+                    selected_chains.append(item[0])
+        return selected_chains
+                
+                      
 
     def initialize_chains(gomoku, n, chainlength = SEARCHDEPTH):
         #create some chains randomly
         chainset = []
         for i in range(n):
             chain = []
-            lastgomoku = gomoku
-            while chainlen < chainlength:
+            lastgomoku = copy.deepcopy(gomoku)
+            while len(chain) < chainlength:
                 checking_position = position2check(lastgomoku.state[0])
+                if checking_position == []:
+                    logDebug("==================================================")
+                    logDebug("Initialize_chains: Empty checking_position")
+                    raise Exception("Empty checking_position")
+                #print(checking_position)
                 position = random.sample(checking_position, 1)
-                chain.append((position))
-                lastgomoku.make_move(position[0], position[1], lastgomoku.state[1])
+                chain.append((position[0]))
+                lastgomoku.make_move(position[0][0], position[0][1], lastgomoku.state[1])
             chainset.append(chain)
+        if chainset ==[]:
+            logDebug("==================================================")
+            logDebug("Initialize_chains:Empty chainsets initialized!")
+            raise Exception("Empty chainsets initialized!")
         return chainset
 
     #initialize
-    if gomoku.state[1]==1 and gomoku.state == [[0 for i in range(MAX_BOARD)] for j in range(MAX_BOARD)]:
-        gomoku.make_move(MAX_BOARD//2,MAX_BOARD//2,gomoku.state[1])
-    chains = initialize_chains(gomoku, n = INITIALCHAINNUM)
-    child_chain_set = []
-    #Rounds
-    while(list(child_chain_set.difference(chains))!=[]):
-        chains = copy.deepcopy(child_chain_set)
-        # Compute fitness values
-        chain_set = []
-        for item in chains:
-            chain_set.append([item, fitness_function(gomoku, item)])
-        # Select parents and cross fertilize
+    DEBUG_LOGFILE = r"C:\\Users\\sywin\\Documents\\GitHub\\piskvork\\tmp\\debug.log"
+    # ...and clear it initially
+    with open(DEBUG_LOGFILE,"w") as f:
+        pass
+    logDebug("==================================================")
+    logDebug("GA Initializing")
+    import time
+    starttime = time.time()
+    if sum([sum(item) for item in gomoku.state[0]]) == 0:
+        logDebug("=================================================")
+        logDebug("Starting board::"+str(time.time()-starttime))
+        return((MAX_BOARD//2,MAX_BOARD//2))
+    else:
+        logDebug("=================================================")
+        logDebug("Not a starting board::"+str(time.time()-starttime))
+        chains = initialize_chains(gomoku, n=INITIALCHAINNUM)
+        logDebug("=================================================")
+        logDebug("chain initialized!::"+str(time.time()-starttime))
         child_chain_set = []
-        for i in range(PARENTNUM):
-            [parent1, parent2] = selectionofgod_the_programmer(chain_set, 2, replacement=0)
-            [child1, child2] = cross_fertilize(parent1, parent2)
-            child_chain_set.append(child1)
-            child_chain_set.append(child2)
-        # Mutation
-        for i, item in enumerate(child_chain_set):
-            if random.random() <= MUTATIONRATE:
-                child_chain_set[i] = mutation(chain, gomoku)
-        # Next Generation
-    [finial_chain] = selectionofgod_the_programmer(chain_set, 1)
-    finial_position = finial_chain[0]
-    return finial_position
-
-
-
-
-
+        s = 0
+        # Rounds
+        while (([item for item in chains if item not in child_chain_set]  != []) or s<=MAXROUNDS):
+            logDebug("=================================================")
+            logDebug("Round:"+str(s)+"::"+str(time.time()-starttime))
+            if child_chain_set != []:
+                chains = child_chain_set
+#             print(chains)
+            # Compute fitness values
+            logDebug("=================================================")
+            logDebug("Computing fitness values::"+str(time.time()-starttime))
+            chain_set = []
+            for item in chains:
+                chain_set.append([item, fitness_function(gomoku, item)])
+            # Select parents and cross fertilize
+            logDebug("=================================================")
+            logDebug("Cross fertilizing"+"::"+str(time.time()-starttime))
+            child_chain_set = []
+            for i in range(PARENTNUM):
+                [parent1, parent2] = selectionofgod_the_programmer(chain_set, 2)
+                [child1, child2] = cross_fertilize(parent1, parent2)
+                child_chain_set.append(child1)
+                child_chain_set.append(child2)
+            # Mutation
+            for i, item in enumerate(child_chain_set):
+                if random.random() <= MUTATIONRATE:
+                    child_chain_set[i] = mutation(item, gomoku)
+            # Next Generation
+            s += 1
+        logDebug("=================================================")
+        logDebug("finial chain created!::" + str(time.time() - starttime))
+        print(child_chain_set)
+        [finial_chain] = selectionofgod_the_programmer(child_chain_set, 1)
+        return finial_chain
 
 
 
@@ -321,19 +364,19 @@ def GA(gomoku):
 # To test it, just "uncomment" it (delete enclosing """)
 ######################################################################
 
-# # define a file for logging ...
-# DEBUG_LOGFILE = "C:\\Users\\zkdin\\Downloads\\piskvork\\tmp\\fighting_random.log"
-# # ...and clear it initially
-# with open(DEBUG_LOGFILE,"w") as f:
-#     pass
+# define a file for logging ...
+DEBUG_LOGFILE = r"C:\\Users\\sywin\\Documents\\GitHub\\piskvork\\tmp\\debug.log"
+# ...and clear it initially
+with open(DEBUG_LOGFILE,"w") as f:
+    pass
 
-# # define a function for writing messages to the file
-# def logDebug(msg):
-#     with open(DEBUG_LOGFILE,"a") as f:
-#         f.write(msg+"\n")
-#         f.flush()
+# define a function for writing messages to the file
+def logDebug(msg):
+    with open(DEBUG_LOGFILE,"a") as f:
+        f.write(msg+"\n")
+        f.flush()
 
-# # define a function to get exception traceback
+# define a function to get exception traceback
 # def logTraceBack():
 #     import traceback
 #     with open(DEBUG_LOGFILE,"a") as f:
